@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"../../pkg/fass"
+	"github.com/W4RH4WK/FASS/pkg/fass"
 )
 
 func printUsage() {
