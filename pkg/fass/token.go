@@ -3,17 +3,17 @@ package fass
 import (
 	"bufio"
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/base32"
 	"io"
 )
 
 // Token that is given to a user, it is commonly used for authenticating
-// uploads. They are typically fixed length base64.URLEncoding strings.
+// uploads.
 type Token = string
 
 // GenerateToken generates a fixed length token.
 func GenerateToken() (Token, error) {
-	const length = 36
+	const length = 25
 
 	token := make([]byte, length)
 	_, err := rand.Read(token)
@@ -21,7 +21,7 @@ func GenerateToken() (Token, error) {
 		return "", err
 	}
 
-	return base64.URLEncoding.EncodeToString(token), nil
+	return base32.StdEncoding.EncodeToString(token), nil
 }
 
 // TokenMapping relates tokens to mail addresses. Be careful when handling since
