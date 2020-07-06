@@ -11,13 +11,20 @@ type Course struct {
 	Identifier string `json:"-"`
 	Name       string
 	URL        string
-	Exercises  []Exercise `json:"-"`
+	Path       string              `json:"-"`
+	Exercises  map[string]Exercise `json:"-"`
 	Users      []Token
 }
 
 // Exercise represents an exercise sheet.
 type Exercise struct {
 	Identifier string `json:"-"`
+	Path       string `json:"-"`
+}
+
+// BuildScriptPath provides the path for the build script of the exercise.
+func (e Exercise) BuildScriptPath() string {
+	return path.Join(e.Path, "build")
 }
 
 // LoadCourses loads all courses from the given directory.
@@ -44,7 +51,10 @@ func LoadCourses(dataPath string) (courses []Course, err error) {
 
 // LoadCourse loads course data from disk.
 func LoadCourse(coursePath string) (course Course, err error) {
-	course.Identifier = path.Base(coursePath)
+	course = Course{
+		Identifier: path.Base(coursePath),
+		Path:       coursePath,
+	}
 
 	err = unmarshalFromFile(path.Join(coursePath, "course.json"), &course)
 	if err != nil {
@@ -56,17 +66,21 @@ func LoadCourse(coursePath string) (course Course, err error) {
 	return
 }
 
-func loadExercises(coursePath string) (exercises []Exercise, err error) {
+func loadExercises(coursePath string) (map[string]Exercise, error) {
 	courseDir, err := ioutil.ReadDir(coursePath)
 	if err != nil {
-		return
+		return nil, err
 	}
 
+	result := make(map[string]Exercise)
 	for _, f := range courseDir {
 		if f.IsDir() {
-			exercises = append(exercises, Exercise{Identifier: f.Name()})
+			result[f.Name()] = Exercise{
+				Identifier: f.Name(),
+				Path:       path.Join(coursePath, f.Name()),
+			}
 		}
 	}
 
-	return
+	return result, nil
 }
