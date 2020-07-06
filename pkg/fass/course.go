@@ -29,7 +29,7 @@ func LoadCourses(dataPath string) (courses []Course, err error) {
 
 	for _, f := range dataDir {
 		if f.IsDir() {
-			course, err := LoadCourse(f.Name())
+			course, err := LoadCourse(path.Join(dataPath, f.Name()))
 			if err != nil {
 				log.Println("Could not load course:", f.Name())
 				continue
@@ -43,21 +43,21 @@ func LoadCourses(dataPath string) (courses []Course, err error) {
 }
 
 // LoadCourse loads course data from disk.
-func LoadCourse(identifier string) (course Course, err error) {
-	course.Identifier = identifier
+func LoadCourse(coursePath string) (course Course, err error) {
+	course.Identifier = path.Base(coursePath)
 
-	err = unmarshalFromFile(path.Join(identifier, "course.json"), &course)
+	err = unmarshalFromFile(path.Join(coursePath, "course.json"), &course)
 	if err != nil {
 		return
 	}
 
-	course.Exercises, err = loadExercises(identifier)
+	course.Exercises, err = loadExercises(coursePath)
 
 	return
 }
 
-func loadExercises(courseIdentifier string) (exercises []Exercise, err error) {
-	courseDir, err := ioutil.ReadDir(courseIdentifier)
+func loadExercises(coursePath string) (exercises []Exercise, err error) {
+	courseDir, err := ioutil.ReadDir(coursePath)
 	if err != nil {
 		return
 	}
