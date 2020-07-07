@@ -55,6 +55,8 @@ func main() {
 	switch os.Args[1] {
 	case "token":
 		generateTokenMapping(os.Args[2])
+	case "serve":
+		fass.Serve(":8080")
 	case "help":
 		printUsage()
 		os.Exit(0)
