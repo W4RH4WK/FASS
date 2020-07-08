@@ -10,33 +10,49 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func courseExerciseFromRequest(r *http.Request) (course Course, exercise Exercise, err error) {
+func tokenFromRequest(r *http.Request) Token {
+	return r.Header.Get("X-Auth-Token")
+}
+
+func submissionFilenameFromRequest(r *http.Request) string {
+	return tokenFromRequest(r) + ".zip"
+}
+
+func courseFromRequest(r *http.Request) (course Course, err error) {
 	vars := mux.Vars(r)
 
 	course, err = LoadCourse(vars["course"])
 	if err != nil {
 		err = errors.New("course not found")
+	}
+
+	return
+}
+
+func courseExerciseFromRequest(r *http.Request) (course Course, exercise Exercise, err error) {
+	vars := mux.Vars(r)
+
+	course, err = courseFromRequest(r)
+	if err != nil {
 		return
 	}
 
 	exercise, found := course.Exercises[vars["exercise"]]
 	if !found {
 		err = errors.New("exercise not found")
-		return
 	}
 
 	return
 }
 
-func handleBuildStatus(w http.ResponseWriter, r *http.Request) {
+func apiBuildStatus(w http.ResponseWriter, r *http.Request) {
 	_, exercise, err := courseExerciseFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	// TODO check token
-	submissionFilename := "t0k3n.zip"
+	submissionFilename := submissionFilenameFromRequest(r)
 
 	buildOutput, err := exercise.GetBuildOutput(submissionFilename)
 	if err != nil {
@@ -53,14 +69,12 @@ func handleBuildStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleUpload(w http.ResponseWriter, r *http.Request) {
+func apiUpload(w http.ResponseWriter, r *http.Request) {
 	course, exercise, err := courseExerciseFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-
-	// TODO check token
 
 	submission, _, err := r.FormFile("file")
 	if err != nil {
@@ -69,11 +83,11 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isZIP(submission) {
-		http.Error(w, "w=Wrong content type, application/zip required.", http.StatusBadRequest)
+		http.Error(w, "wrong content type, application/zip required.", http.StatusBadRequest)
 		return
 	}
 
-	submissionFilename := "t0k3n.zip"
+	submissionFilename := submissionFilenameFromRequest(r)
 
 	err = exercise.StoreSubmission(submission, submissionFilename)
 	if err != nil {
@@ -94,19 +108,38 @@ func invokeBuild(exercise Exercise, submissionFilename string) {
 	}
 }
 
-func isZIP(file io.Reader) bool {
-	buffer := make([]byte, 512)
-	_, err := file.Read(buffer)
-	if err != nil {
-		return false
-	}
-	return http.DetectContentType(buffer) == "application/zip"
+func tokenAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := tokenFromRequest(r)
+		if !TokenHasValidFormat(token) {
+			http.Error(w, "invalid token", http.StatusBadRequest)
+			return
+		}
+
+		course, err := courseFromRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		for _, user := range course.Users {
+			if user == token {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	})
 }
 
 func Serve(addr string) {
 	router := mux.NewRouter()
-	router.HandleFunc("/{course}/{exercise}", handleBuildStatus).Methods("GET")
-	router.HandleFunc("/{course}/{exercise}", handleUpload).Methods("POST")
+
+	apiRouter := router.PathPrefix("/api").Subrouter()
+	apiRouter.Use(tokenAuthMiddleware)
+	apiRouter.HandleFunc("/{course}/{exercise}", apiBuildStatus).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/{course}/{exercise}", apiUpload).Methods(http.MethodPost)
 
 	http.Handle("/", router)
 
