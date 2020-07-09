@@ -102,6 +102,10 @@ func (e Exercise) WasBuildSuccessful(submissionFilename string) bool {
 	return exitCode == 0
 }
 
+func (e Exercise) GetFeedback(submissionFilename string) (io.Reader, error) {
+	return os.Open(e.feedbackFilepath(submissionFilename))
+}
+
 func (e Exercise) submissionDir() string {
 	return path.Join(e.Path, "submissions")
 }
@@ -118,6 +122,11 @@ func (e Exercise) logFilepath(submissionFilename string) string {
 func (e Exercise) exitFilepath(submissionFilename string) string {
 	basename := strings.TrimSuffix(submissionFilename, filepath.Ext(submissionFilename))
 	return path.Join(e.submissionDir(), basename+".exit")
+}
+
+func (e Exercise) feedbackFilepath(submissionFilename string) string {
+	basename := strings.TrimSuffix(submissionFilename, filepath.Ext(submissionFilename))
+	return path.Join(e.submissionDir(), basename+".feedback")
 }
 
 // LoadCourses loads all courses from the given directory.

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -45,6 +46,18 @@ func courseExerciseFromRequest(r *http.Request) (course Course, exercise Exercis
 	return
 }
 
+func apiListExercises(w http.ResponseWriter, r *http.Request) {
+	course, err := courseFromRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	for _, exercise := range course.Exercises {
+		fmt.Fprintln(w, exercise.Identifier)
+	}
+}
+
 func apiBuildStatus(w http.ResponseWriter, r *http.Request) {
 	_, exercise, err := courseExerciseFromRequest(r)
 	if err != nil {
@@ -69,7 +82,7 @@ func apiBuildStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func apiUpload(w http.ResponseWriter, r *http.Request) {
+func apiBuildUpload(w http.ResponseWriter, r *http.Request) {
 	course, exercise, err := courseExerciseFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -78,7 +91,7 @@ func apiUpload(w http.ResponseWriter, r *http.Request) {
 
 	submission, _, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -91,6 +104,7 @@ func apiUpload(w http.ResponseWriter, r *http.Request) {
 
 	err = exercise.StoreSubmission(submission, submissionFilename)
 	if err != nil {
+		log.Println(course.Identifier, exercise.Identifier, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -98,7 +112,7 @@ func apiUpload(w http.ResponseWriter, r *http.Request) {
 	log.Println("Invoking build:", course.Identifier, exercise.Identifier, submissionFilename)
 	go invokeBuild(exercise, submissionFilename)
 
-	fmt.Fprintln(w, "Upload successful")
+	fmt.Fprintln(w, course.Identifier, exercise.Identifier, "upload successful")
 }
 
 func invokeBuild(exercise Exercise, submissionFilename string) {
@@ -106,6 +120,26 @@ func invokeBuild(exercise Exercise, submissionFilename string) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func apiFeedback(w http.ResponseWriter, r *http.Request) {
+	course, exercise, err := courseExerciseFromRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	feedback, err := exercise.GetFeedback(submissionFilenameFromRequest(r))
+	if os.IsNotExist(err) {
+		http.Error(w, "no feedback available", http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println(course.Identifier, exercise.Identifier, err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	io.Copy(w, feedback)
 }
 
 func tokenAuthMiddleware(next http.Handler) http.Handler {
@@ -131,13 +165,16 @@ func tokenAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// Serve starts the FASS service.
 func Serve(addr string) {
 	router := mux.NewRouter()
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
 	apiRouter.Use(tokenAuthMiddleware)
-	apiRouter.HandleFunc("/{course}/{exercise}", apiBuildStatus).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/{course}/{exercise}", apiUpload).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/{course}", apiListExercises)
+	apiRouter.HandleFunc("/{course}/{exercise}/build", apiBuildStatus).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/{course}/{exercise}/build", apiBuildUpload).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/{course}/{exercise}/feedback", apiFeedback)
 
 	http.Handle("/", router)
 
