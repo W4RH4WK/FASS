@@ -22,6 +22,15 @@ type Course struct {
 	Users      []Token
 }
 
+func (c Course) IsUserAuthorized(token Token) bool {
+	for _, user := range c.Users {
+		if user == token {
+			return true
+		}
+	}
+	return false
+}
+
 // Exercise represents an exercise sheet.
 type Exercise struct {
 	Identifier string `json:"-"`

@@ -122,14 +122,12 @@ func tokenAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		for _, user := range course.Users {
-			if user == token {
-				next.ServeHTTP(w, r)
-				return
-			}
+		if !course.IsUserAuthorized(token) {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
 		}
 
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		next.ServeHTTP(w, r)
 	})
 }
 
