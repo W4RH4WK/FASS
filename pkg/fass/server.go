@@ -146,6 +146,10 @@ func apiFeedback(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, feedback)
 }
 
+func apiCoffee(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "I'm a teapot", http.StatusTeapot)
+}
+
 func tokenAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := tokenFromRequest(r)
@@ -179,6 +183,7 @@ func Serve(addr string) {
 	apiRouter.HandleFunc("/{course}/{exercise}/build", apiBuildStatus).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/{course}/{exercise}/build", apiBuildUpload).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/{course}/{exercise}/feedback", apiFeedback)
+	apiRouter.HandleFunc("/{course}/{exercise}/coffee", apiCoffee)
 
 	http.Handle("/", router)
 
