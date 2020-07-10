@@ -20,13 +20,13 @@ func TokenHasValidFormat(t Token) bool {
 }
 
 // GenerateToken generates a fixed length token.
-func GenerateToken() (Token, error) {
+func GenerateToken() Token {
 	const length = 25
 
 	tokenData := make([]byte, length)
 	_, err := rand.Read(tokenData)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	token := base32.StdEncoding.EncodeToString(tokenData)
@@ -34,7 +34,7 @@ func GenerateToken() (Token, error) {
 		panic("generated token has invalid format")
 	}
 
-	return token, nil
+	return token
 }
 
 // TokenMapping relates tokens to mail addresses. Be careful when handling since
@@ -45,7 +45,7 @@ type TokenMapping map[Token]Mail
 // file). The input is expected to contain one mail address per line. Tokens are
 // generated on the fly. A token is guaranteed to be unique within the returned
 // mapping.
-func NewTokenMapping(mailAddresses io.Reader) (mapping TokenMapping, err error) {
+func NewTokenMapping(mailAddresses io.Reader) (mapping TokenMapping) {
 	mapping = make(TokenMapping)
 
 	scanner := bufio.NewScanner(mailAddresses)
@@ -54,10 +54,7 @@ func NewTokenMapping(mailAddresses io.Reader) (mapping TokenMapping, err error) 
 
 		// generate token that's not already in use
 		for {
-			token, err = GenerateToken()
-			if err != nil {
-				return
-			}
+			token = GenerateToken()
 
 			if _, ok := mapping[token]; !ok {
 				break
@@ -68,4 +65,10 @@ func NewTokenMapping(mailAddresses io.Reader) (mapping TokenMapping, err error) 
 	}
 
 	return
+}
+
+func LoadTokenMapping(mappingFilepath string) (TokenMapping, error) {
+	mapping := make(TokenMapping)
+	err := unmarshalFromFile(mappingFilepath, &mapping)
+	return mapping, err
 }

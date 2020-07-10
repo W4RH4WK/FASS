@@ -2,6 +2,7 @@ package fass
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -189,4 +190,21 @@ func loadExercises(coursePath string) (map[string]Exercise, error) {
 	}
 
 	return result, nil
+}
+
+func StoreCourse(course Course) error {
+	os.Mkdir(course.Identifier, 0755)
+
+	courseFile, err := os.Create(path.Join(course.Identifier, "course.json"))
+	if err != nil {
+		return err
+	}
+
+	courseJSON, err := json.MarshalIndent(course, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	courseFile.Write(courseJSON)
+	return nil
 }

@@ -15,7 +15,7 @@ func printUsage() {
 }
 
 func generateTokenMapping(mailFilepath string) {
-	const mappingPath = "mapping.txt"
+	const mappingPath = "mapping.json"
 
 	mailFile, err := os.Open(mailFilepath)
 	if err != nil {
@@ -24,11 +24,7 @@ func generateTokenMapping(mailFilepath string) {
 	}
 	defer mailFile.Close()
 
-	mapping, err := fass.NewTokenMapping(mailFile)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+	mapping := fass.NewTokenMapping(mailFile)
 
 	mappingFile, err := os.Create(mappingPath)
 	if err != nil {
@@ -46,6 +42,32 @@ func generateTokenMapping(mailFilepath string) {
 	mappingFile.Write(mappingJSON)
 }
 
+func generateCourse(identifier string, mappingFilepath string) {
+	_, err := fass.LoadCourse(identifier)
+	if err == nil {
+		fmt.Fprintln(os.Stderr, "course already exists")
+		return
+	}
+
+	mapping, err := fass.LoadTokenMapping(mappingFilepath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return
+	}
+
+	course := fass.Course{
+		Identifier: identifier,
+		Name: "course name",
+		URL: "http://example.org",
+	}
+
+	for token := range mapping {
+		course.Users = append(course.Users, token)
+	}
+
+	fass.StoreCourse(course)
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		printUsage()
@@ -53,10 +75,12 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "token":
-		generateTokenMapping(os.Args[2])
 	case "serve":
 		fass.Serve("localhost:8080")
+	case "token":
+		generateTokenMapping(os.Args[2])
+	case "course":
+		generateCourse(os.Args[2], os.Args[3])
 	case "help":
 		printUsage()
 		os.Exit(0)
@@ -64,44 +88,4 @@ func main() {
 		printUsage()
 		os.Exit(2)
 	}
-
-	// flag.Usage = printUsage
-	// flag.Parse()
-
-	// if flag.NArg() != 1 {
-	// 	flag.Usage()
-	// 	os.Exit(2)
-	// }
-
-	// mailFile, err := os.Open(flag.Args()[0])
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer mailFile.Close()
-
-	// mapping, err := fass.NewTokenMapping(mailFile)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// var users []fass.Token
-	// for token := range mapping {
-	// 	users = append(users, token)
-	// }
-
-	// course := fass.Course{
-	// 	Identifier: "703000",
-	// 	Name:       "Test Course",
-	// 	URL:        "https://example.org",
-	// 	Users:      users,
-	// }
-
-	// result, _ := json.MarshalIndent(course, "", "  ")
-	// fmt.Println(string(result))
-
-	// course, err := fass.LoadCourses(".")
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(course)
 }
