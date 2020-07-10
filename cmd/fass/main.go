@@ -10,7 +10,17 @@ import (
 )
 
 func printUsage() {
-	fmt.Fprintf(os.Stderr, "usage: %s <command>\n", os.Args[0])
+	const usage = `usage: %s <command>
+
+commands:
+
+  serve                                            Start FASS service.
+  token <mail-file>                                Generate a token for each mail address and produces a 'mapping.json' file.
+  course <identifier> <mapping-file>               Generate a course, adding the tokens from the given mapping file.
+  distribute <course-identifier> <mapping-file>    Distributes the generated tokens via mail.
+`
+
+	fmt.Fprintf(os.Stderr, usage, os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -68,6 +78,30 @@ func generateCourse(identifier string, mappingFilepath string) {
 	fass.StoreCourse(course)
 }
 
+func distributeTokens(courseIdentifier string, mappingFilepath string) {
+	course, err := fass.LoadCourse(courseIdentifier)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return
+	}
+
+	mapping, err := fass.LoadTokenMapping(mappingFilepath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return
+	}
+
+	for _, user := range course.Users {
+		if addr, found := mapping[user]; found {
+			fmt.Println("sending:", addr)
+			err := fass.DistributeToken(user, addr, course);
+			if err != nil {
+				fmt.Fprintln(os.Stderr, addr, err.Error())
+			}
+		}
+	}
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		printUsage()
@@ -81,6 +115,8 @@ func main() {
 		generateTokenMapping(os.Args[2])
 	case "course":
 		generateCourse(os.Args[2], os.Args[3])
+	case "distribute":
+		distributeTokens(os.Args[2], os.Args[3])
 	case "help":
 		printUsage()
 		os.Exit(0)
