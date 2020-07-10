@@ -1,6 +1,7 @@
 package fass
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -37,18 +38,21 @@ type Exercise struct {
 	Path       string `json:"-"`
 }
 
-func (e Exercise) StoreSubmission(submission io.Reader, filename string) error {
+func (e Exercise) StoreSubmission(submission io.Reader, filename string) ([]byte, error) {
 	os.Mkdir(e.submissionDir(), 0755)
 
 	target, err := os.Create(path.Join(e.submissionDir(), filename))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer target.Close()
 
-	io.Copy(target, submission)
+	tee := io.TeeReader(submission, target)
 
-	return nil
+	hasher := sha256.New()
+	io.Copy(hasher, tee)
+
+	return hasher.Sum(nil), nil
 }
 
 func (e Exercise) BuildSubmission(submissionFilename string) error {

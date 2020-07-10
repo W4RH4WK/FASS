@@ -1,6 +1,7 @@
 package fass
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -95,14 +96,16 @@ func apiBuildUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isZIP(submission) {
-		http.Error(w, "wrong content type, application/zip required.", http.StatusBadRequest)
+	submissionReader := bufio.NewReader(submission)
+
+	if !isZIP(submissionReader) {
+		http.Error(w, "wrong content type, application/zip required", http.StatusBadRequest)
 		return
 	}
 
 	submissionFilename := submissionFilenameFromRequest(r)
 
-	err = exercise.StoreSubmission(submission, submissionFilename)
+	sha256sum, err := exercise.StoreSubmission(submissionReader, submissionFilename)
 	if err != nil {
 		log.Println(course.Identifier, exercise.Identifier, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -113,6 +116,7 @@ func apiBuildUpload(w http.ResponseWriter, r *http.Request) {
 	go invokeBuild(exercise, submissionFilename)
 
 	fmt.Fprintln(w, course.Identifier, exercise.Identifier, "upload successful")
+	fmt.Fprintf(w, "%x\n", sha256sum)
 }
 
 func invokeBuild(exercise Exercise, submissionFilename string) {

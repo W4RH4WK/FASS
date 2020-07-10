@@ -1,8 +1,8 @@
 package fass
 
 import (
+	"bufio"
 	"encoding/json"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -23,11 +23,7 @@ func unmarshalFromFile(filepath string, v interface{}) error {
 	return json.Unmarshal(content, v)
 }
 
-func isZIP(file io.Reader) bool {
-	buffer := make([]byte, 512)
-	_, err := file.Read(buffer)
-	if err != nil {
-		return false
-	}
-	return http.DetectContentType(buffer) == "application/zip"
+func isZIP(file *bufio.Reader) bool {
+	header, _ := file.Peek(512)
+	return http.DetectContentType(header) == "application/zip"
 }
