@@ -17,6 +17,10 @@ commands:
   token <mail-file>                                Generate a token for each mail address and produces a 'mapping.json' file.
   course <identifier> <mapping-file>               Generate a course, adding the tokens from the given mapping file.
   distribute <course-identifier> <mapping-file>    Distributes the generated tokens via mail.
+
+config:
+
+  Config file is located at ~/.config/fass/config.json.
 `
 
 	fmt.Fprintf(os.Stderr, usage, os.Args[0])
@@ -106,12 +110,12 @@ func loadConfig() fass.Config {
 }
 
 func main() {
+	config := loadConfig()
+
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(2)
 	}
-
-	config := loadConfig()
 
 	switch os.Args[1] {
 	case "serve":

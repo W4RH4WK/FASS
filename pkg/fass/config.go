@@ -3,6 +3,8 @@ package fass
 import (
 	"os"
 	"path"
+
+	"github.com/adrg/xdg"
 )
 
 type Config struct {
@@ -16,7 +18,12 @@ type Config struct {
 }
 
 func (c Config) path() string {
-	return "/home/alex/.config/fass/config.json"
+	path, err := xdg.ConfigFile("fass/config.json")
+	if err != nil {
+		return "config.json"
+	}
+	
+	return path
 }
 
 func (c Config) Store() error {
