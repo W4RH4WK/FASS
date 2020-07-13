@@ -41,6 +41,11 @@ func GenerateToken() Token {
 // this is personal identifiable data.
 type TokenMapping map[Token]Mail
 
+// Store stores the mapping as file.
+func (m TokenMapping) Store(filepath string) error {
+	return marshalToFile(filepath, m)
+}
+
 // NewTokenMapping creates a TokenMapping from the given io.Reader (typically a
 // file). The input is expected to contain one mail address per line. Tokens are
 // generated on the fly. A token is guaranteed to be unique within the returned

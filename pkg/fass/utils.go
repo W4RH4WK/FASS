@@ -8,6 +8,22 @@ import (
 	"os"
 )
 
+func marshalToFile(filepath string, v interface{}) error {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	vJSON, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	file.Write(vJSON)
+	return err
+}
+
 func unmarshalFromFile(filepath string, v interface{}) error {
 	file, err := os.Open(filepath)
 	if err != nil {

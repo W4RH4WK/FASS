@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -35,21 +34,7 @@ func generateTokenMapping(mailFilepath string) {
 	defer mailFile.Close()
 
 	mapping := fass.NewTokenMapping(mailFile)
-
-	mappingFile, err := os.Create(mappingPath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	defer mappingFile.Close()
-
-	mappingJSON, err := json.MarshalIndent(mapping, "", "  ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	mappingFile.Write(mappingJSON)
+	mapping.Store(mappingPath)
 }
 
 func generateCourse(identifier string, mappingFilepath string) {
@@ -75,7 +60,11 @@ func generateCourse(identifier string, mappingFilepath string) {
 		course.Users = append(course.Users, token)
 	}
 
-	fass.StoreCourse(course)
+	err = course.Store()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return
+	}
 }
 
 func distributeTokens(courseIdentifier string, mappingFilepath string) {

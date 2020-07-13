@@ -2,7 +2,6 @@ package fass
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,6 +21,15 @@ type Course struct {
 	Path       string              `json:"-"`
 	Exercises  map[string]Exercise `json:"-"`
 	Users      []Token
+}
+
+func (c Course) dataFilepath() string {
+	return path.Join(c.Path, "course.json")
+}
+
+func (c Course) Store() error {
+	os.Mkdir(c.Identifier, 0755)
+	return marshalToFile(c.dataFilepath(), c)
 }
 
 func (c Course) IsUserAuthorized(token Token) bool {
@@ -163,7 +171,7 @@ func LoadCourse(coursePath string) (course Course, err error) {
 		Path:       coursePath,
 	}
 
-	err = unmarshalFromFile(path.Join(coursePath, "course.json"), &course)
+	err = unmarshalFromFile(course.dataFilepath(), &course)
 	if err != nil {
 		return
 	}
@@ -190,21 +198,4 @@ func loadExercises(coursePath string) (map[string]Exercise, error) {
 	}
 
 	return result, nil
-}
-
-func StoreCourse(course Course) error {
-	os.Mkdir(course.Identifier, 0755)
-
-	courseFile, err := os.Create(path.Join(course.Identifier, "course.json"))
-	if err != nil {
-		return err
-	}
-
-	courseJSON, err := json.MarshalIndent(course, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	courseFile.Write(courseJSON)
-	return nil
 }
