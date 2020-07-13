@@ -1,14 +1,13 @@
 package fass
 
-import "net/smtp"
+import (
+	"net/smtp"
+)
 
 // Mail addresses are represented as strings.
 type Mail = string
 
-func DistributeToken(token Token, to Mail, course Course) error {
-	const host = "localhost"
-	const from = "fass@fass.dps.uibk.ac.at"
-
+func DistributeToken(token Token, to Mail, course Course, config Config) error {
 	msg := []byte("To: " + to + "\r\n" +
 		"Subject: " + course.Identifier + " - FASS Token\r\n" +
 		"\r\n" +
@@ -16,5 +15,10 @@ func DistributeToken(token Token, to Mail, course Course) error {
 		"\r\n" +
 		token + "\r\n")
 
-	return smtp.SendMail("localhost", nil, from, []string{to}, msg)
+	var auth smtp.Auth = nil
+	if config.MailUseAuth {
+		auth = smtp.PlainAuth(config.MailAuthIdent, config.MailAuthUser, config.MailAuthPass, config.MailHost)
+	}
+
+	return smtp.SendMail(config.MailHost, auth, config.MailFrom, []string{to}, msg)
 }

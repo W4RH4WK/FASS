@@ -67,7 +67,7 @@ func generateCourse(identifier string, mappingFilepath string) {
 	}
 }
 
-func distributeTokens(courseIdentifier string, mappingFilepath string) {
+func distributeTokens(config fass.Config, courseIdentifier string, mappingFilepath string) {
 	course, err := fass.LoadCourse(courseIdentifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -83,12 +83,26 @@ func distributeTokens(courseIdentifier string, mappingFilepath string) {
 	for _, user := range course.Users {
 		if addr, found := mapping[user]; found {
 			fmt.Println("sending:", addr)
-			err := fass.DistributeToken(user, addr, course);
+			err := fass.DistributeToken(user, addr, course, config);
 			if err != nil {
 				fmt.Fprintln(os.Stderr, addr, err.Error())
 			}
 		}
 	}
+}
+
+func loadConfig() fass.Config {
+	config, err := fass.LoadConfig()
+	if os.IsNotExist(err) {
+		config = fass.DefaultConfig()
+		err = config.Store()
+	}
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return config
 }
 
 func main() {
@@ -97,15 +111,17 @@ func main() {
 		os.Exit(2)
 	}
 
+	config := loadConfig()
+
 	switch os.Args[1] {
 	case "serve":
-		fass.Serve("localhost:8080")
+		fass.Serve(config.ListenAddress)
 	case "token":
 		generateTokenMapping(os.Args[2])
 	case "course":
 		generateCourse(os.Args[2], os.Args[3])
 	case "distribute":
-		distributeTokens(os.Args[2], os.Args[3])
+		distributeTokens(config, os.Args[2], os.Args[3])
 	case "help":
 		printUsage()
 		os.Exit(0)
