@@ -28,7 +28,7 @@ func (c Course) dataFilepath() string {
 }
 
 func (c Course) Store() error {
-	os.Mkdir(c.Identifier, 0755)
+	os.MkdirAll(c.Identifier, 0755)
 	return marshalToFile(c.dataFilepath(), c)
 }
 
@@ -48,7 +48,7 @@ type Exercise struct {
 }
 
 func (e Exercise) StoreSubmission(submission io.Reader, filename string) ([]byte, error) {
-	os.Mkdir(e.submissionDir(), 0755)
+	os.MkdirAll(e.submissionDir(), 0755)
 
 	target, err := os.Create(path.Join(e.submissionDir(), filename))
 	if err != nil {
