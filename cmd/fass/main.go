@@ -8,13 +8,15 @@ import (
 	"github.com/W4RH4WK/FASS/pkg/fass"
 )
 
+const mappingFilename = "mapping.json"
+
 func printUsage() {
 	const usage = `usage: %s <command>
 
 commands:
 
   serve                                            Start FASS service.
-  token <mail-file>                                Generate a token for each mail address and produces a 'mapping.json' file.
+  token <mail-file>                                Generate a token for each mail address and produces a '%s' file.
   course <identifier> <mapping-file>               Generate a course, adding the tokens from the given mapping file.
   distribute <course-identifier> <mapping-file>    Distributes the generated tokens via mail.
 
@@ -23,13 +25,11 @@ config:
   Config file is located at ~/.config/fass/config.json.
 `
 
-	fmt.Fprintf(os.Stderr, usage, os.Args[0])
+	fmt.Fprintf(os.Stderr, usage, os.Args[0], mappingFilename)
 	flag.PrintDefaults()
 }
 
 func generateTokenMapping(mailFilepath string) {
-	const mappingPath = "mapping.json"
-
 	mailFile, err := os.Open(mailFilepath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -38,7 +38,7 @@ func generateTokenMapping(mailFilepath string) {
 	defer mailFile.Close()
 
 	mapping := fass.NewTokenMapping(mailFile)
-	mapping.Store(mappingPath)
+	mapping.Store(mappingFilename)
 }
 
 func generateCourse(identifier string, mappingFilepath string) {
@@ -110,6 +110,15 @@ func loadConfig() fass.Config {
 	return config
 }
 
+func warnAboutMapping() {
+	_, err := os.Stat(mappingFilename)
+	if os.IsNotExist(err) {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "Warning: %s present\n", mappingFilename)
+}
+
 func main() {
 	config := loadConfig()
 
@@ -120,6 +129,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "serve":
+		warnAboutMapping()
 		fass.Serve(config.ListenAddress)
 	case "token":
 		generateTokenMapping(os.Args[2])
