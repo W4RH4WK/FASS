@@ -64,38 +64,6 @@ func (e Exercise) StoreSubmission(submission io.Reader, filename string) ([]byte
 	return hasher.Sum(nil), nil
 }
 
-func (e Exercise) BuildSubmission(submissionFilename string) error {
-	logFile, err := os.Create(e.logFilepath(submissionFilename))
-	if err != nil {
-		return err
-	}
-	defer logFile.Close()
-
-	cmd := exec.Command(e.buildScriptPath())
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
-
-	err = cmd.Run()
-
-	// store exit code
-	{
-		exitCode := 0
-		if exitError, ok := err.(*exec.ExitError); ok {
-			exitCode = exitError.ExitCode()
-		}
-
-		exitFile, err := os.Create(e.exitFilepath(submissionFilename))
-		if err != nil {
-			return err
-		}
-		defer exitFile.Close()
-
-		fmt.Fprintln(exitFile, exitCode)
-	}
-
-	return err
-}
-
 func (e Exercise) GetBuildOutput(submissionFilename string) (io.Reader, error) {
 	return os.Open(e.logFilepath(submissionFilename))
 }
@@ -198,4 +166,48 @@ func loadExercises(coursePath string) (map[string]Exercise, error) {
 	}
 
 	return result, nil
+}
+
+func BuildSubmission(course Course, exercise Exercise, user Token, submissionFilename string) error {
+	logFile, err := os.Create(exercise.logFilepath(submissionFilename))
+	if err != nil {
+		return err
+	}
+	defer logFile.Close()
+
+	submissionFilepath := path.Join(exercise.submissionDir(), submissionFilename)
+	submissionFilepath, err = filepath.Abs(submissionFilepath)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(exercise.buildScriptPath())
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	cmd.Env = []string{
+		"FASS_COURSE=" + course.Identifier,
+		"FASS_EXERCISE=" + exercise.Identifier,
+		"FASS_USER=" + user,
+		"FASS_SUBMISSION=" + submissionFilepath,
+	}
+
+	err = cmd.Run()
+
+	// store exit code
+	{
+		exitCode := 0
+		if exitError, ok := err.(*exec.ExitError); ok {
+			exitCode = exitError.ExitCode()
+		}
+
+		exitFile, err := os.Create(exercise.exitFilepath(submissionFilename))
+		if err != nil {
+			return err
+		}
+		defer exitFile.Close()
+
+		fmt.Fprintln(exitFile, exitCode)
+	}
+
+	return err
 }

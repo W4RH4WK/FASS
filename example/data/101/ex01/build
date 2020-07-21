@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -eu
+
+readonly DIR="$(dirname "$(readlink -f "$0")")"
+
+echo "====== FASS Build ======"
+date
+echo "Course:     $FASS_COURSE"
+echo "Exercise:   $FASS_EXERCISE"
+echo "User:       $FASS_USER"
+echo "Submission: $FASS_SUBMISSION"
+sha256sum "$FASS_SUBMISSION"
+echo
+
+# Name of the Docker image to use.
+readonly IMAGE="101"
+
+# Name of the container instance.
+readonly CONTAINER="$FASS_COURSE-$FASS_USER"
+
+docker stop "$CONTAINER" &> /dev/null || true
+
+docker run \
+	--name "$CONTAINER" \
+	--stop-timeout 10 \
+	--rm \
+	--volume "$FASS_SUBMISSION:/home/user/submission.zip" \
+	--volume "$DIR/build_inside:/home/user/build" \
+	"$IMAGE" bash build

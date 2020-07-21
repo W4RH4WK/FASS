@@ -1,6 +1,0 @@
-#!/bin/bash
-
-date
-
-echo "Building! 🔧"
-echo "Error! ❌" >&2

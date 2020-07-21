@@ -113,14 +113,14 @@ func apiBuildUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("Invoking build:", course.Identifier, exercise.Identifier, submissionFilename)
-	go invokeBuild(exercise, submissionFilename)
+	go invokeBuild(course, exercise, tokenFromRequest(r), submissionFilename)
 
 	fmt.Fprintln(w, course.Identifier, exercise.Identifier, "upload successful")
 	fmt.Fprintf(w, "%x\n", sha256sum)
 }
 
-func invokeBuild(exercise Exercise, submissionFilename string) {
-	err := exercise.BuildSubmission(submissionFilename)
+func invokeBuild(course Course, exercise Exercise, user Token, submissionFilename string) {
+	err := BuildSubmission(course, exercise, user, submissionFilename)
 	if err != nil {
 		log.Println(err)
 	}
