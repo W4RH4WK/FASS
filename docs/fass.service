@@ -1,0 +1,14 @@
+[Unit]
+Description=FASS Service
+After=network.target
+
+[Service]
+ExecStart=/home/fass/go/bin/fass serve
+WorkingDirectory=/var/fass
+User=fass
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
