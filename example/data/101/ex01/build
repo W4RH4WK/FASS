@@ -25,6 +25,6 @@ docker run \
 	--name "$CONTAINER" \
 	--stop-timeout 10 \
 	--rm \
-	--volume "$FASS_SUBMISSION:/home/user/submission.zip" \
-	--volume "$DIR/build_inside:/home/user/build" \
+	--mount "type=bind,source=$FASS_SUBMISSION,target=/home/user/submission.zip,readonly" \
+	--mount "type=bind,source=$DIR/build_inside,target=/home/user/build,readonly" \
 	"$IMAGE" bash build
