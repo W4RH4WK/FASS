@@ -38,7 +38,7 @@ func (c Config) Store() error {
 func DefaultConfig() Config {
 	return Config {
 		ListenAddress: "localhost:8080",
-		MailHost: "localhost",
+		MailHost: "localhost:25",
 		MailFrom: "fass@localhost",
 		MailUseAuth: false,
 		MailAuthIdent: "",
