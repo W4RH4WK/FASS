@@ -58,6 +58,7 @@ func generateCourse(identifier string, mappingFilepath string) {
 		Identifier: identifier,
 		Name: "course name",
 		URL: "http://example.org",
+		Path: identifier,
 	}
 
 	for token := range mapping {
