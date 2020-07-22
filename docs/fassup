@@ -1,0 +1,69 @@
+#!/bin/bash
+
+set -euo pipefail
+shopt -s expand_aliases
+
+readonly HOST="localhost:8080"
+readonly COURSE="101"
+readonly TOKEN="GCZQJE6RIBPJYDNRSPS4EXXVBUFDBCDHDRSSD4P7"
+
+curl_() {
+	local response=$(curl --location --no-progress-meter --write-out '%{http_code}' \
+		--header "X-Auth-Token: $TOKEN" "$@")
+
+	local http_code=$(tail -1 <<< "$response")
+	local output=$(head -n -1 <<< "$response")
+
+	if [[ "$http_code" != 2* ]]; then
+		echo "$http_code $output" >&2
+		return 1
+	fi
+	
+	echo "$output"
+}
+
+fass_list() {
+	curl_ "$HOST/api/$COURSE"
+}
+
+fass_submit() {
+	local exercise=$1
+	local submission=$2
+
+	local output
+	output=$(curl_ -F "file=@$submission" "$HOST/api/$COURSE/$exercise/build")
+	echo "$output"
+
+	local reported_sum=$(tail -1 <<< "$output")
+	sha256sum -c <<< "$reported_sum $submission"
+}
+
+fass_status() {
+	local exercise=$1
+	curl_ "$HOST/api/$COURSE/$exercise/build"
+}
+
+fass_feedback() {
+	local exercise=$1
+	curl_ "$HOST/api/$COURSE/$exercise/feedback"
+}
+
+print_usage() {
+	echo "usage: $0 <command>"
+	echo
+	echo "Commands:"
+	echo "  list                          List exercises."
+	echo "  submit   <exercise> <file>    Submit the given file."
+	echo "  status   <exercise>           Queries the status of the last submission."
+	echo "  feedback <exercise>           Queries for feedback."
+}
+
+if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" || "$1" == "help" ]]; then
+	print_usage
+	exit 1
+fi
+
+readonly cmd=$1
+shift
+
+fass_$cmd "$@"
