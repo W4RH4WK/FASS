@@ -2,7 +2,7 @@
 
 set -eu
 
-# Absolute path to this the directory containing this script.
+# Absolute path to the directory containing this script.
 readonly DIR="$(dirname "$(readlink -f "$0")")"
 
 # Name of the Docker image to use.
