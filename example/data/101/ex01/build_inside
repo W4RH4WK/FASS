@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -eux
-
-unzip submission.zip
-cd ex01
-make
-./app

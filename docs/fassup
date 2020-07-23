@@ -4,8 +4,8 @@ set -euo pipefail
 shopt -s expand_aliases
 
 readonly HOST="localhost:8080"
-readonly COURSE="101"
-readonly TOKEN="GCZQJE6RIBPJYDNRSPS4EXXVBUFDBCDHDRSSD4P7"
+readonly COURSE="cs101"
+readonly TOKEN="T0K3N"
 
 curl_() {
 	local response=$(curl --location --no-progress-meter --write-out '%{http_code}' \

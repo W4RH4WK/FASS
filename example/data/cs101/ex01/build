@@ -2,7 +2,14 @@
 
 set -eu
 
+# Absolute path to this the directory containing this script.
 readonly DIR="$(dirname "$(readlink -f "$0")")"
+
+# Name of the Docker image to use.
+readonly IMAGE="cs101"
+
+# Name of the container instance.
+readonly CONTAINER="$FASS_COURSE-$FASS_USER"
 
 echo "====== FASS Build ======"
 date
@@ -13,18 +20,13 @@ echo "Submission: $FASS_SUBMISSION"
 sha256sum "$FASS_SUBMISSION"
 echo
 
-# Name of the Docker image to use.
-readonly IMAGE="101"
-
-# Name of the container instance.
-readonly CONTAINER="$FASS_COURSE-$FASS_USER"
-
+# To prevent overlapping execution we interrupt the previous build process.
 docker stop "$CONTAINER" &> /dev/null || true
 
 docker run \
 	--name "$CONTAINER" \
 	--stop-timeout 10 \
 	--rm \
-	--mount "type=bind,source=$FASS_SUBMISSION,target=/home/user/submission.zip,readonly" \
 	--mount "type=bind,source=$DIR/build_inside,target=/home/user/build,readonly" \
+	--mount "type=bind,source=$FASS_SUBMISSION,target=/home/user/submission.zip,readonly" \
 	"$IMAGE" bash build

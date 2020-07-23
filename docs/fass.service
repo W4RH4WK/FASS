@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/home/fass/go/bin/fass serve
-WorkingDirectory=/var/fass
+WorkingDirectory=/home/fass/data
 User=fass
 
 Restart=always

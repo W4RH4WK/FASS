@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -eux
+
+unzip submission.zip
+cd ex01
+
+make
+
+./hello > hello.stdout.txt
+
+diff - hello.stdout.txt <<< "Hello World"
