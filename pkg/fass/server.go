@@ -188,5 +188,8 @@ func Serve(addr string) {
 	http.Handle("/", router)
 
 	log.Printf("Listening on %s\n", addr)
-	http.ListenAndServe(addr, nil)
+	err := http.ListenAndServe(addr, nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
