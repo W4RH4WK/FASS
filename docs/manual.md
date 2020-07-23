@@ -186,6 +186,16 @@ As student, use `fassup`.
 
 **Hint:** It may be helpful to add date and SHA256 checksum of the submission to the feedback so students can be sure that the correct version was reviewed.
 
+## Bulk Upload / Download
+
+The recommended way to bulk download submissions and upload feedback is to use `rsync`.
+
+    # Download submissions
+    rsync -am --include='*.zip' --include='*/' --exclude='*' fass@fass:data/cs101 .
+
+    # Upload feedback
+    rsync -am --include='*.feedback' --include='*/' --exclude='*' cs101 fass@fass:data/
+
 ## Resolve Token
 
 To map a given token to its e-mail address simply use `grep` or `jq`.
