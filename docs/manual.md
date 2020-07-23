@@ -191,10 +191,10 @@ As student, use `fassup`.
 The recommended way to bulk download submissions and upload feedback is to use `rsync`.
 
     # Download submissions
-    rsync -am --include='*.zip' --include='*/' --exclude='*' fass@fass:data/cs101 .
+    rsync -ai --include='*.zip' --include='*/' --exclude='*' fass@fass:data/cs101 .
 
     # Upload feedback
-    rsync -am --include='*.feedback' --include='*/' --exclude='*' cs101 fass@fass:data/
+    rsync -ai --include='*.feedback' --include='*/' --exclude='*' cs101 fass@fass:data/
 
 ## Resolve Token
 
