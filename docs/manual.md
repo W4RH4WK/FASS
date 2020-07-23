@@ -1,4 +1,4 @@
-# Manual (draft)
+# Manual
 
 The Fully Automated Submission System (FASS) is a tool designed to ease the submission process for computer science courses.
 It is targeted at a tech-savvy audience, but don't you worry, this manual explains all the necessary details.
