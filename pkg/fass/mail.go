@@ -11,7 +11,7 @@ func DistributeToken(token Token, to Mail, course Course, config Config) error {
 	msg := []byte("To: " + to + "\r\n" +
 		"Subject: " + course.Identifier + " - FASS Token\r\n" +
 		"\r\n" +
-		"Here is your token for the " + course.Name + " course:\r\n" +
+		"Here is your token for " + course.Name + ".\r\n" +
 		"\r\n" +
 		token + "\r\n")
 
