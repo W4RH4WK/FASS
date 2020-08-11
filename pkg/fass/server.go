@@ -99,7 +99,7 @@ func apiBuildUpload(w http.ResponseWriter, r *http.Request) {
 	submissionReader := bufio.NewReader(submission)
 
 	if !isZIP(submissionReader) {
-		http.Error(w, "wrong content type, application/zip required", http.StatusBadRequest)
+		http.Error(w, "wrong content type, application/zip required", http.StatusUnsupportedMediaType)
 		return
 	}
 
