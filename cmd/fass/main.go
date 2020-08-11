@@ -1,14 +1,23 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"strings"
+	"time"
 
 	"github.com/W4RH4WK/FASS/pkg/fass"
 )
 
-const mappingFilename = "mapping.json"
+const (
+	mappingFilename = "mapping.json"
+	timeLayout      = "2006-01-02 15:04"
+)
+
+var stdinReader = bufio.NewReader(os.Stdin)
 
 func printUsage() {
 	const usage = `usage: %s <command>
@@ -17,7 +26,8 @@ commands:
 
   serve                                            Start FASS service.
   token <mail-file>                                Generate a token for each mail address and produces a '%s' file.
-  course <identifier> <mapping-file>               Generate a course, adding the tokens from the given mapping file.
+  course <identifier> <mapping-file>               Create a course, adding the tokens from the given mapping file.
+  exercise <course-identifier> <identifier>        Create an exercise for the given course.
   distribute <course-identifier> <mapping-file>    Distributes the generated tokens via mail.
 
 config:
@@ -27,6 +37,28 @@ config:
 
 	fmt.Fprintf(os.Stderr, usage, os.Args[0], mappingFilename)
 	flag.PrintDefaults()
+}
+
+func inputString(prompt string, fallback string) string {
+	fmt.Printf("%s [%s]: ", prompt, fallback)
+
+	text, err := stdinReader.ReadString('\n')
+	if err != nil || len(text) == 1 {
+		return fallback
+	}
+
+	return strings.Replace(text, "\n", "", -1)
+}
+
+func inputTime(prompt string, fallback time.Time) time.Time {
+	text := inputString(prompt, fallback.Format(timeLayout))
+
+	result, err := time.Parse(timeLayout, text)
+	if err != nil {
+		return fallback
+	}
+
+	return result
 }
 
 func generateTokenMapping(mailFilepath string) {
@@ -41,7 +73,7 @@ func generateTokenMapping(mailFilepath string) {
 	mapping.Store(mappingFilename)
 }
 
-func generateCourse(identifier string, mappingFilepath string) {
+func createCourse(identifier string, mappingFilepath string) {
 	_, err := fass.LoadCourse(identifier)
 	if err == nil {
 		fmt.Fprintln(os.Stderr, "course already exists")
@@ -56,9 +88,9 @@ func generateCourse(identifier string, mappingFilepath string) {
 
 	course := fass.Course{
 		Identifier: identifier,
-		Name: "course name",
-		URL: "http://example.org",
-		Path: identifier,
+		Name:       inputString("Course Name", "Example Course"),
+		URL:        inputString("Course URL", "http://example.org"),
+		Path:       identifier,
 	}
 
 	for token := range mapping {
@@ -68,7 +100,32 @@ func generateCourse(identifier string, mappingFilepath string) {
 	err = course.Store()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
+	}
+}
+
+func createExercise(courseIdentifier string, exerciseIdentifier string) {
+	course, err := fass.LoadCourse(courseIdentifier)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
+	}
+
+	if _, ok := course.Exercises[exerciseIdentifier]; ok {
+		fmt.Fprintln(os.Stderr, "exercise already exists")
+		return
+	}
+
+	exercise := fass.Exercise{
+		Identifier: exerciseIdentifier,
+		Path:       path.Join(course.Path, exerciseIdentifier),
+		Deadline:   inputTime("Deadline", time.Now().AddDate(0, 0, 7)),
+	}
+
+	fmt.Println(exercise.Deadline)
+
+	err = exercise.Store()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
 	}
 }
 
@@ -134,7 +191,9 @@ func main() {
 	case "token":
 		generateTokenMapping(os.Args[2])
 	case "course":
-		generateCourse(os.Args[2], os.Args[3])
+		createCourse(os.Args[2], os.Args[3])
+	case "exercise":
+		createExercise(os.Args[2], os.Args[3])
 	case "distribute":
 		distributeTokens(config, os.Args[2], os.Args[3])
 	case "help":

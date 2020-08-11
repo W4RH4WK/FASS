@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -87,6 +88,11 @@ func apiBuildUpload(w http.ResponseWriter, r *http.Request) {
 	course, exercise, err := courseExerciseFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if time.Now().After(exercise.Deadline) {
+		http.Error(w, "deadline has already passed", http.StatusForbidden)
 		return
 	}
 

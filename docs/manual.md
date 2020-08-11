@@ -84,14 +84,16 @@ All tokens from the given mapping file are added to the user list of the course.
 
 This should result in a new folder named `cs101` containing a `course.json`.
 Open this `course.json` file and observe that the tokens from the mapping have been added.
-You may want to modify the metadata right away.
 
 ### Adding an Exercise
 
 Each exercise corresponds to a folder inside the corresponding *course folder*.
-Just pick a meaningful identifier for your exercises (e.g. `ex01`, `ex02`).
+Pick a meaningful identifier for your exercise (e.g. `ex01`, `ex02`) and issue the following command in your *data folder*.
 
-Create a new folder `ex01` within your *course folder*.
+    fass exercise cs101 ex01
+
+This adds an exercise with the identifier `ex01` to the course `cs101`.
+A new folder `ex01` is created within your *course folder* which hosts an `exercise.json` file.
 Upon submission, an executable named `build` within this *exercise folder* will be run.
 
 For testing purposes, copy the following script to *exercise folder* (`$HOME/data/cs101/ex01/build`)

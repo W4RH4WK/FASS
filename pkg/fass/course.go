@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Course represents a course with its exercise sheets and registered users.
@@ -49,6 +50,20 @@ func (c Course) IsUserAuthorized(token Token) bool {
 type Exercise struct {
 	Identifier string `json:"-"`
 	Path       string `json:"-"`
+	Deadline   time.Time
+}
+
+func (e Exercise) dataFilepath() string {
+	return path.Join(e.Path, "exercise.json")
+}
+
+func (e Exercise) Store() error {
+	err := os.MkdirAll(e.Path, 0755)
+	if err != nil {
+		return err
+	}
+
+	return marshalToFile(e.dataFilepath(), e)
 }
 
 func (e Exercise) StoreSubmission(submission io.Reader, filename string) ([]byte, error) {
@@ -162,14 +177,24 @@ func loadExercises(coursePath string) (map[string]Exercise, error) {
 	result := make(map[string]Exercise)
 	for _, f := range courseDir {
 		if f.IsDir() {
-			result[f.Name()] = Exercise{
-				Identifier: f.Name(),
-				Path:       path.Join(coursePath, f.Name()),
+			exercise, err := loadExercise(path.Join(coursePath, f.Name()))
+			if err == nil {
+				result[exercise.Identifier] = exercise
 			}
 		}
 	}
 
 	return result, nil
+}
+
+func loadExercise(exercisePath string) (Exercise, error) {
+	exercise := Exercise{
+		Identifier: path.Base(exercisePath),
+		Path:       exercisePath,
+	}
+
+	err := unmarshalFromFile(exercise.dataFilepath(), &exercise)
+	return exercise, err
 }
 
 func BuildSubmission(course Course, exercise Exercise, user Token, submissionFilename string) error {
