@@ -28,7 +28,11 @@ func (c Course) dataFilepath() string {
 }
 
 func (c Course) Store() error {
-	os.MkdirAll(c.Identifier, 0755)
+	err := os.MkdirAll(c.Identifier, 0755)
+	if err != nil {
+		return err
+	}
+
 	return marshalToFile(c.dataFilepath(), c)
 }
 
