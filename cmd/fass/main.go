@@ -88,7 +88,7 @@ func distributeTokens(config fass.Config, courseIdentifier string, mappingFilepa
 	for _, user := range course.Users {
 		if addr, found := mapping[user]; found {
 			fmt.Println("sending:", addr)
-			err := fass.DistributeToken(user, addr, course, config);
+			err := fass.DistributeToken(user, addr, course, config)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, addr, err.Error())
 			}
