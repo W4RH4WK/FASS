@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -25,10 +24,12 @@ func printUsage() {
 commands:
 
   serve                                            Start FASS service.
-  token <mail-file>                                Generate a token for each mail address and produces a '%s' file.
-  course <identifier> <mapping-file>               Create a course, adding the tokens from the given mapping file.
-  exercise <course-identifier> <identifier>        Create an exercise for the given course.
+  token      <mail-file>                           Generate a token for each mail address and produces a '%s' file.
+  course     <course-identifier> <mapping-file>    Create a course, adding the tokens from the given mapping file.
   distribute <course-identifier> <mapping-file>    Distributes the generated tokens via mail.
+  exercise   <exercise-identifier>                 Create an exercise. Run this from the course directory.
+
+  Commands are to be run from the data directory unless stated otherwise.
 
 config:
 
@@ -103,27 +104,19 @@ func createCourse(identifier string, mappingFilepath string) {
 	}
 }
 
-func createExercise(courseIdentifier string, exerciseIdentifier string) {
-	course, err := fass.LoadCourse(courseIdentifier)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return
-	}
-
-	if _, ok := course.Exercises[exerciseIdentifier]; ok {
+func createExercise(exerciseIdentifier string) {
+	if _, err := os.Stat(exerciseIdentifier); !os.IsNotExist(err) {
 		fmt.Fprintln(os.Stderr, "exercise already exists")
 		return
 	}
 
 	exercise := fass.Exercise{
 		Identifier: exerciseIdentifier,
-		Path:       path.Join(course.Path, exerciseIdentifier),
+		Path:       exerciseIdentifier,
 		Deadline:   inputTime("Deadline", time.Now().AddDate(0, 0, 7)),
 	}
 
-	fmt.Println(exercise.Deadline)
-
-	err = exercise.Store()
+	err := exercise.Store()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
@@ -193,7 +186,7 @@ func main() {
 	case "course":
 		createCourse(os.Args[2], os.Args[3])
 	case "exercise":
-		createExercise(os.Args[2], os.Args[3])
+		createExercise(os.Args[2])
 	case "distribute":
 		distributeTokens(config, os.Args[2], os.Args[3])
 	case "help":

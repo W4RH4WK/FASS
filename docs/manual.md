@@ -88,12 +88,12 @@ Open this `course.json` file and observe that the tokens from the mapping have b
 ### Adding an Exercise
 
 Each exercise corresponds to a folder inside the corresponding *course folder*.
-Pick a meaningful identifier for your exercise (e.g. `ex01`, `ex02`) and issue the following command in your *data folder*.
+Pick a meaningful identifier for your exercise (e.g. `ex01`, `ex02`) and issue the following command in your *course folder*.
 
-    fass exercise cs101 ex01
+    fass exercise ex01
 
-This adds an exercise with the identifier `ex01` to the course `cs101`.
-A new folder `ex01` is created within your *course folder* which hosts an `exercise.json` file.
+This adds an exercise with the identifier `ex01`.
+A new folder `ex01` is created which hosts an `exercise.json` file.
 Upon submission, an executable named `build` within this *exercise folder* will be run.
 
 For testing purposes, copy the following script to *exercise folder* (`$HOME/data/cs101/ex01/build`)
