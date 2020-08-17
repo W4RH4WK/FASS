@@ -7,8 +7,8 @@ readonly COURSE="cs101"
 readonly TOKEN="T0K3N"
 
 curl_() {
-	local response=$(curl --location --no-progress-meter --write-out '%{http_code}' \
-		--header "X-Auth-Token: $TOKEN" "$@")
+	local response=$(curl --location --silent --show-error \
+		--write-out '%{http_code}' --header "X-Auth-Token: $TOKEN" "$@")
 
 	local http_code=$(tail -1 <<< "$response")
 	local output=$(head -n -1 <<< "$response")
