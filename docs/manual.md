@@ -225,3 +225,11 @@ We move the actual build steps to a dedicated script that is then executed insid
 See [example `build_inside`](../example/data/cs101/ex01/build_inside).
 
 **Important:** Host files made available to the container should always be readonly.
+
+## Troubleshooting
+
+### HTTPS Redirect Issues
+
+Apparently redirecting with 301 causes POST request to become GET requests.
+This seems to be the common case for all major browsers and HTTP clients.
+Be sure to directly specify the target host (including protocol) such that no redirects are necessary.
