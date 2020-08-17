@@ -12,6 +12,7 @@ func DistributeToken(token Token, to Mail, course Course, config Config) error {
 		"Subject: " + course.Identifier + " - FASS Token\r\n" +
 		"\r\n" +
 		"Here is your token for " + course.Name + ".\r\n" +
+		course.URL + "\r\n" +
 		"\r\n" +
 		token + "\r\n")
 
